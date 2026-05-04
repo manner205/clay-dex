@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Character {
+  id           String   @id @default(uuid())
+  dex_numbers  Int[]
+  name         String
+  location     String   // '장식장' | '7층집' | '텐트'
+  photo_url    String?
+  description  String?
+  hp           Int?
+  attack       Int?
+  attributes   String[]
+  race         String[]
+  bonus_effects String[]
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@map("characters")
+}
