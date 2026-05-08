@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/button'
 import { AttributeBadge } from '@/components/AttributeBadge'
 import { StatBar } from '@/components/StatBar'
 import { useAdmin } from '@/components/AdminProvider'
+import { EquipSlots } from '@/components/EquipSlots'
+import { CombinedStats } from '@/components/CombinedStats'
+import { WeaponSelectModal } from '@/components/WeaponSelectModal'
 
 type Character = {
   id: string; dex_numbers: number[]; name: string; location: string
@@ -30,11 +33,51 @@ export default function CharacterDetailPage() {
   const { isAdmin } = useAdmin()
   const [c, setC] = useState<Character | null>(null)
 
+  type EquippedWeapon = {
+    id: string; slot_position: number
+    weapon: { id: string; name: string; photo_url: string | null; hp_bonus: number; attack_bonus: number; weapon_type: string | null; attributes: string[] }
+  }
+  type SynergySetting = { attribute: string; bonus_type: string; bonus_value: number }
+  const [equippedWeapons, setEquippedWeapons] = useState<EquippedWeapon[]>([])
+  const [synergySettings, setSynergySettings] = useState<SynergySetting[]>([])
+  const [selectingSlot, setSelectingSlot] = useState<number | null>(null)
+
+  const loadEquip = useCallback(async () => {
+    const res = await fetch(`/api/characters/${id}/equip`)
+    if (res.ok) {
+      const data = await res.json()
+      setEquippedWeapons(data.equipped_weapons ?? [])
+      setSynergySettings(data.synergy_settings ?? [])
+    }
+  }, [id])
+
   useEffect(() => {
     fetch(`/api/characters/${id}`)
       .then(r => r.json())
       .then(setC)
-  }, [id])
+    loadEquip()
+  }, [id, loadEquip])
+
+  const handleEquip = async (weaponId: string) => {
+    if (selectingSlot == null) return
+    const res = await fetch(`/api/characters/${id}/equip`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ weapon_id: weaponId, slot_position: selectingSlot }),
+    })
+    if (res.ok) {
+      setSelectingSlot(null)
+      loadEquip()
+    } else {
+      const data = await res.json()
+      alert(data.error || '장착 실패')
+    }
+  }
+
+  const handleUnequip = async (slotPosition: number) => {
+    const res = await fetch(`/api/characters/${id}/equip?slot=${slotPosition}`, { method: 'DELETE' })
+    if (res.ok) loadEquip()
+  }
 
   const handleDelete = async () => {
     if (!confirm(`"${c?.name}"을 삭제할까요?`)) return
@@ -111,6 +154,25 @@ export default function CharacterDetailPage() {
           </div>
         )}
 
+        {/* 무기 장착 슬롯 UI */}
+        <div className="space-y-3 p-4 rounded-xl bg-muted/50 border">
+          <EquipSlots
+            slots={equippedWeapons}
+            isAdmin={isAdmin}
+            onSlotClick={(pos) => setSelectingSlot(pos)}
+            onUnequip={handleUnequip}
+          />
+        </div>
+
+        {/* 합산 스탯 표시 (무기 장착 포함) */}
+        <CombinedStats
+          baseHp={c.hp}
+          baseAttack={c.attack}
+          characterAttributes={c.attributes}
+          weapons={equippedWeapons.map(e => e.weapon)}
+          synergySettings={synergySettings}
+        />
+
         {/* 속성 · 종족 · 부과효과 */}
         {(c.attributes.length > 0 || c.race.length > 0 || c.bonus_effects.length > 0) && (
           <div className="space-y-3 p-4 rounded-xl bg-muted/50">
@@ -158,6 +220,14 @@ export default function CharacterDetailPage() {
           <Share2 size={16} className="mr-2" /> 링크 공유
         </Button>
       </div>
+
+      {/* 무기 선택 모달 */}
+      {selectingSlot != null && (
+        <WeaponSelectModal
+          onSelect={handleEquip}
+          onClose={() => setSelectingSlot(null)}
+        />
+      )}
     </div>
   )
 }

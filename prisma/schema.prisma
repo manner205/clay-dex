@@ -8,19 +8,58 @@ datasource db {
 }
 
 model Character {
-  id           String   @id @default(uuid())
-  dex_numbers  Int[]
-  name         String
-  location     String   // '장식장' | '7층집' | '텐트'
-  photo_url    String?
-  description  String?
-  hp           Int?
-  attack       Int?
-  attributes   String[]
-  race         String[]
-  bonus_effects String[]
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  id               String            @id @default(uuid())
+  name             String
+  location         String
+  photo_url        String?
+  description      String?
+  hp               Int?
+  attack           Int?
+  attributes       String[]
+  bonus_effects    String[]
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @updatedAt
+  race             String[]
+  dex_numbers      Int[]
+  equipped_weapons CharacterWeapon[]
 
   @@map("characters")
+}
+
+model Weapon {
+  id           String           @id @default(uuid())
+  dex_number   Int              @unique
+  name         String
+  photo_url    String?
+  description  String?
+  durability   Int?
+  weapon_type  String?
+  created_at   DateTime         @default(now())
+  updated_at   DateTime         @updatedAt
+  equipped_by  CharacterWeapon?
+
+  @@map("weapons")
+}
+
+model CharacterWeapon {
+  id            String    @id @default(uuid())
+  character_id  String
+  weapon_id     String    @unique
+  slot_position Int
+  equipped_at   DateTime  @default(now())
+  character     Character @relation(fields: [character_id], references: [id], onDelete: Cascade)
+  weapon        Weapon    @relation(fields: [weapon_id], references: [id], onDelete: Cascade)
+
+  @@unique([character_id, slot_position])
+  @@map("character_weapons")
+}
+
+model SynergySetting {
+  id          String   @id @default(uuid())
+  attribute   String   @unique
+  bonus_type  String   @default("fixed")
+  bonus_value Int      @default(10)
+  updated_at  DateTime @updatedAt
+
+  @@map("synergy_settings")
 }

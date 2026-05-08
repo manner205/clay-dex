@@ -17,6 +17,12 @@ export async function GET(req: NextRequest) {
       ...(attribute ? { attributes: { has: attribute } } : {}),
       ...(race ? { race: { has: race } } : {}),
     },
+    include: {
+      equipped_weapons: {
+        include: { weapon: { select: { id: true, name: true, photo_url: true, weapon_type: true } } },
+        orderBy: { slot_position: 'asc' },
+      },
+    },
     orderBy:
       sort === 'name' ? { name: 'asc' } :
       sort === 'latest' ? { created_at: 'desc' } :

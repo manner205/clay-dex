@@ -42,3 +42,8 @@ export const ATTRIBUTE_COLORS: Record<string, { bg: string; text: string }> = {
   원념:       { bg: '#78350F', text: '#fff' },
   독기:       { bg: '#84CC16', text: '#fff' },
 }
+
+export const WEAPON_TYPES = [
+  '검', '양손검', '창', '활', '방패',
+] as const
+export type WeaponType = typeof WEAPON_TYPES[number]

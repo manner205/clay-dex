@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
-import { Search, Lock, LockOpen, Plus, SlidersHorizontal } from 'lucide-react'
+import { Search, Lock, LockOpen, Plus, SlidersHorizontal, Swords, Settings } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { CharacterCard } from '@/components/CharacterCard'
 import { AdminModal } from '@/components/AdminModal'
@@ -11,6 +11,7 @@ import { LOCATIONS, ATTRIBUTES, RACES } from '@/lib/constants'
 type Character = {
   id: string; dex_numbers: number[]; name: string; location: string
   photo_url: string | null; attributes: string[]; race: string[]
+  equipped_weapons?: { slot_position: number; weapon: { id: string; name: string; photo_url: string | null; weapon_type: string | null } }[]
 }
 
 const SORT_OPTIONS = [
@@ -55,6 +56,9 @@ export default function Home() {
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-bold">🧱 클레이 도감</h1>
           <div className="flex gap-1">
+            <Link href="/weapons" className="p-2 rounded-full hover:bg-muted inline-flex items-center">
+              <Swords size={18} />
+            </Link>
             <button onClick={() => setShowFilter(v => !v)} className="p-2 rounded-full hover:bg-muted">
               <SlidersHorizontal size={18} />
             </button>
@@ -62,6 +66,9 @@ export default function Home() {
               <>
                 <Link href="/characters/new" className="p-2 rounded-full hover:bg-muted inline-flex items-center">
                   <Plus size={18} />
+                </Link>
+                <Link href="/settings/synergy" className="p-2 rounded-full hover:bg-muted inline-flex items-center">
+                  <Settings size={18} />
                 </Link>
                 <button onClick={handleLogout} className="p-2 rounded-full hover:bg-muted">
                   <LockOpen size={18} />
